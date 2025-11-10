@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -10,7 +10,7 @@ import { Input } from '@/components/ui/input';
 import { Search } from 'lucide-react';
 import { toast } from 'sonner';
 
-export default function SearchPage() {
+function SearchContent() {
   const searchParams = useSearchParams();
   const initialQuery = searchParams.get('q') || '';
 
@@ -97,7 +97,7 @@ export default function SearchPage() {
             <>
               <div className="mb-6">
                 <p className="text-zinc-500 font-medium">
-                  {products.length} {products.length === 1 ? 'result' : 'results'} for "{query}"
+                  {products.length} {products.length === 1 ? 'result' : 'results'} for &quot;{query}&quot;
                 </p>
               </div>
 
@@ -110,7 +110,7 @@ export default function SearchPage() {
                     No Results Found
                   </h2>
                   <p className="text-zinc-600 max-w-md">
-                    We couldn't find any products matching "{query}". Try different keywords.
+                    We couldnt find any products matching &quot;{query}&quot;. Try different keywords.
                   </p>
                 </div>
               )}
@@ -131,5 +131,24 @@ export default function SearchPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col bg-black">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-white border-r-transparent mb-4" />
+            <p className="text-zinc-500 uppercase font-bold text-sm">Loading...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <SearchContent />
+    </Suspense>
   );
 }

@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Header } from '@/components/header';
 import { Footer } from '@/components/footer';
@@ -10,7 +10,7 @@ import { formatPrice } from '@/lib/utils/format-price';
 import { CheckCircle, Package, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 
-export default function ConfirmationPage() {
+function ConfirmationContent() {
   const searchParams = useSearchParams();
   const orderId = searchParams.get('orderId');
 
@@ -193,5 +193,24 @@ export default function ConfirmationPage() {
 
       <Footer />
     </div>
+  );
+}
+
+export default function ConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col bg-black">
+        <Header />
+        <main className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-2 border-white border-r-transparent mb-4" />
+            <p className="text-zinc-500 uppercase font-bold text-sm">Loading...</p>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    }>
+      <ConfirmationContent />
+    </Suspense>
   );
 }
