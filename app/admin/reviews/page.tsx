@@ -48,7 +48,7 @@ export default function ReviewsPage() {
   const fetchReviews = async () => {
     try {
       const token = AdminAuthService.getToken();
-      let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/reviews`;
+      let url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/reviews`;
 
       if (filterStatus) {
         url += `?status=${filterStatus}`;
@@ -75,7 +75,7 @@ export default function ReviewsPage() {
     try {
       const token = AdminAuthService.getToken();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/reviews/${reviewId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/reviews/${reviewId}`,
         {
           method: 'PATCH',
           headers: {
@@ -101,7 +101,7 @@ export default function ReviewsPage() {
     try {
       const token = AdminAuthService.getToken();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/reviews/${reviewId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/reviews/${reviewId}`,
         {
           method: 'DELETE',
           headers: {

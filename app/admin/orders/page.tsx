@@ -74,7 +74,7 @@ export default function OrdersPage() {
   const fetchOrders = async () => {
     try {
       const token = AdminAuthService.getToken();
-      let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/orders`;
+      let url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/orders`;
 
       if (filterStatus) {
         url += `?status=${filterStatus}`;
@@ -111,7 +111,7 @@ export default function OrdersPage() {
     try {
       const token = AdminAuthService.getToken();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/orders/${selectedOrder.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/orders/${selectedOrder.id}`,
         {
           method: 'PATCH',
           headers: {

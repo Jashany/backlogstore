@@ -108,7 +108,7 @@ export default function ProductsPage() {
   const fetchProducts = async () => {
     try {
       const token = AdminAuthService.getToken();
-      let url = `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/products`;
+      let url = `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/products`;
 
       if (filterActive !== null) {
         url += `?isActive=${filterActive}`;
@@ -218,8 +218,8 @@ export default function ProductsPage() {
       };
 
       const url = isEditMode && selectedProduct
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/products/${selectedProduct.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/products`;
+        ? `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/products/${selectedProduct.id}`
+        : `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/products`;
 
       const response = await fetch(url, {
         method: isEditMode ? 'PUT' : 'POST',
@@ -254,7 +254,7 @@ export default function ProductsPage() {
     try {
       const token = AdminAuthService.getToken();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/products/${productId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/products/${productId}`,
         {
           method: 'DELETE',
           headers: {

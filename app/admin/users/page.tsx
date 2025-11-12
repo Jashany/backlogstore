@@ -42,7 +42,7 @@ export default function UsersPage() {
     try {
       const token = AdminAuthService.getToken();
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000/api'}/admin/users`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'https://api.backlogstore.in/api'}/admin/users`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
