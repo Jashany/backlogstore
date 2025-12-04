@@ -1,318 +1,263 @@
-'use client';
-
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import Image from 'next/image';
-import { ArrowRight, MoveDown, Globe, Maximize2, Sparkles } from 'lucide-react';
+import { ArrowRight, Globe, Maximize2 } from 'lucide-react';
 
-const clamp = (v: number, a = -1, b = 1) => Math.max(a, Math.min(b, v));
-const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
+// --- Utilities ---
+const clamp = (v: number, min: number, max: number) => Math.max(min, Math.min(max, v));
+const lerp = (start: number, end: number, factor: number) => start + (end - start) * factor;
 
 const Hero: React.FC = () => {
-  const containerRef = useRef<HTMLDivElement | null>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
 
-  // Targets & current lerped positions (-1 .. 1)
+  // -- Refs for animation elements --
+  // We use direct DOM manipulation for 60fps performance without React render overhead
+  const gridRef = useRef<HTMLDivElement>(null);
+  const textBackRef = useRef<HTMLDivElement>(null);
+  const textFrontRef = useRef<HTMLDivElement>(null); // For a cool split/glitch effect
+  const modelRef = useRef<HTMLDivElement>(null);
+  const dustRef = useRef<HTMLDivElement>(null);
+  const cursorLightRef = useRef<HTMLDivElement>(null);
+
+  // -- State for Motion Physics --
+  // Target: where the mouse is (normalized -1 to 1)
   const target = useRef({ x: 0, y: 0 });
+  // Current: where the animation is currently at
   const current = useRef({ x: 0, y: 0 });
 
-  // Layer refs for direct DOM transforms (fast)
-  const gradRef = useRef<HTMLDivElement | null>(null);
-  const gridRef = useRef<HTMLDivElement | null>(null);
-  const logoRef = useRef<HTMLDivElement | null>(null);
-  const personRef = useRef<HTMLDivElement | null>(null);
-  const acidMaskRef = useRef<HTMLDivElement | null>(null);
-
-  // Animation loop config
-  const ease = 0.12; // smoothing (0.02 very soft, 0.2 snappier)
-  const rafRef = useRef<number | null>(null);
-
+  // -- Dust Particles (generated once during initial render using lazy state initializer) --
+  type Particle = { width: string; height: string; top: string; left: string; opacity: number };
+  const [particles] = useState<Particle[]>(() =>
+    Array.from({ length: 20 }).map(() => ({
+      width: `${Math.random() * 3}px`,
+      height: `${Math.random() * 3}px`,
+      top: `${Math.random() * 100}%`,
+      left: `${Math.random() * 100}%`,
+      opacity: Math.random() * 0.5 + 0.2,
+    }))
+  );
+  
+  // -- Animation Loop --
   useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
+    let rafId: number;
 
-    // Pointer handler: set target normalized to -1..1 relative to container center
     const onPointerMove = (e: PointerEvent) => {
-      const rect = el.getBoundingClientRect();
-      const px = e.clientX - rect.left;
-      const py = e.clientY - rect.top;
+      if (!containerRef.current) return;
+      const { innerWidth, innerHeight } = window;
+      
+      // Calculate normalized mouse position (-1 to 1)
+      const x = (e.clientX / innerWidth) * 2 - 1;
+      const y = (e.clientY / innerHeight) * 2 - 1;
 
-      // Normalize -1 .. 1 (centered)
-      const nx = clamp((px / rect.width) * 2 - 1, -1, 1);
-      const ny = clamp((py / rect.height) * 2 - 1, -1, 1);
+      target.current = { x, y };
 
-      target.current.x = nx;
-      target.current.y = ny;
+      // Update the "Spotlight" immediately for zero-latency feel on the light itself
+      if (cursorLightRef.current) {
+        cursorLightRef.current.style.transform = `translate(${e.clientX}px, ${e.clientY}px)`;
+      }
     };
 
-    // Touch fallback (touch move)
-    const onTouchMove = (e: TouchEvent) => {
-      if (!e.touches?.length) return;
-      const t = e.touches[0];
-      onPointerMove(new PointerEvent('pointermove', { clientX: t.clientX, clientY: t.clientY }));
-    };
-
-    // Reset to center when leaving container
-    const onLeave = () => {
-      target.current.x = 0;
-      target.current.y = 0;
-    };
-
-    el.addEventListener('pointermove', onPointerMove, { passive: true });
-    el.addEventListener('touchmove', onTouchMove, { passive: true });
-    el.addEventListener('pointerleave', onLeave);
-    el.addEventListener('mouseleave', onLeave);
-
-    // RAF loop: lerp current -> target and apply transforms
     const loop = () => {
-      current.current.x = lerp(current.current.x, target.current.x, ease);
-      current.current.y = lerp(current.current.y, target.current.y, ease);
+      // 1. Lerp physics (Smoothness factor: 0.08 is a good balance of weight and snap)
+      current.current.x = lerp(current.current.x, target.current.x, 0.08);
+      current.current.y = lerp(current.current.y, target.current.y, 0.08);
 
-      const cx = current.current.x;
-      const cy = current.current.y;
+      const { x, y } = current.current;
 
-      // Map layer transforms (adjust multipliers to taste)
-      // Background grid (far) - small opposite movement
+      // 2. Apply Transforms
+      
+      // Layer 1: Grid (Background) - Moves slightly opposite to mouse
       if (gridRef.current) {
-        const gx = cx * -10; // px
-        const gy = cy * -10;
-        gridRef.current.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
-        gridRef.current.style.willChange = 'transform';
+        const moveX = x * -20;
+        const moveY = y * -20;
+        // Using translate3d for GPU acceleration
+        gridRef.current.style.transform = `perspective(1000px) rotateX(${y * 2}deg) rotateY(${x * -2}deg) translate3d(${moveX}px, ${moveY}px, 0)`;
       }
 
-      // Gradient blobs (mid/back) - more pronounced
-      if (gradRef.current) {
-        const gx = cx * 40; // px
-        const gy = cy * 30;
-        gradRef.current.style.transform = `translate3d(${gx}px, ${gy}px, 0)`;
-        gradRef.current.style.willChange = 'transform';
+      // Layer 2: Big Text (Mid-Background) - Moves opposite, slower than grid
+      if (textBackRef.current) {
+        const moveX = x * -40;
+        const moveY = y * -15;
+        textBackRef.current.style.transform = `translate3d(${moveX}px, ${moveY}px, 0)`;
       }
 
-      // Logo text (far-mid) - large subtle translation
-      if (logoRef.current) {
-        // we want text to move noticeably but not too much
-        const lx = cx * -40; // px
-        const ly = cy * -20;
-        // Use translateZ(0) to force GPU and prevent paint jank from background-clip
-        logoRef.current.style.transform = `translate3d(${lx}px, ${ly}px, 0) translateZ(0)`;
-        logoRef.current.style.willChange = 'transform';
+      // Layer 3: Model (Foreground) - Moves WITH mouse (Parallax depth)
+      if (modelRef.current) {
+        const moveX = x * 35;
+        const moveY = y * 15;
+        modelRef.current.style.transform = `translate3d(${moveX}px, ${moveY}px, 0) scale(1.05)`; 
       }
 
-      // Person (front) - moves with pointer (same direction)
-      if (personRef.current) {
-        const px = cx * 30;
-        const py = cy * 12;
-        personRef.current.style.transform = `translate3d(${px}px, ${py}px, 0)`;
-        personRef.current.style.willChange = 'transform';
+      // Layer 4: Dust/Particles (Atmosphere) - Moves opposite, fast
+      if (dustRef.current) {
+        const moveX = x * -60;
+        const moveY = y * -60;
+        dustRef.current.style.transform = `translate3d(${moveX}px, ${moveY}px, 0)`;
       }
 
-      // Acid grid mask center (for radial mask position) - convert to percents
-      if (acidMaskRef.current) {
-        const percX = 50 + cx * 18; // center shift
-        const percY = 50 + cy * 18;
-        const mask = `radial-gradient(600px circle at ${percX}% ${percY}%, black, transparent)`;
-        acidMaskRef.current.style.maskImage = mask;
-        acidMaskRef.current.style.webkitMaskImage = mask;
-      }
-
-      rafRef.current = requestAnimationFrame(loop);
+      rafId = requestAnimationFrame(loop);
     };
 
-    rafRef.current = requestAnimationFrame(loop);
+    window.addEventListener('pointermove', onPointerMove);
+    loop();
 
     return () => {
-      el.removeEventListener('pointermove', onPointerMove as any);
-      el.removeEventListener('touchmove', onTouchMove as any);
-      el.removeEventListener('pointerleave', onLeave);
-      el.removeEventListener('mouseleave', onLeave);
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+      window.removeEventListener('pointermove', onPointerMove);
+      cancelAnimationFrame(rafId);
     };
   }, []);
 
   return (
-    <section
+    <section 
       ref={containerRef}
-      // container needs to accept pointer events
-      className="relative w-full h-[90vh] bg-[#090909] overflow-hidden flex flex-col items-center justify-center text-white cursor-crosshair perspective-1000 pointer-events-auto"
+      className="relative w-full min-h-[100svh] h-[100dvh] bg-[#050505] overflow-hidden flex flex-col items-center justify-center cursor-crosshair select-none"
     >
-
-      {/* Animated Gradient Orbs (mid layer) */}
-      <div
-        ref={gradRef}
-        className="absolute inset-0 overflow-hidden pointer-events-none z-[1]"
-        aria-hidden
-        style={{ transition: 'transform 0.02s linear' }}
-      >
-        {/* Acid Green Blob */}
-        <div
-          className="absolute w-[800px] h-[800px] rounded-full opacity-30 blur-[120px] mix-blend-screen"
-          style={{
-            background: 'radial-gradient(circle, #CCFF00 0%, transparent 60%)',
-            top: '0%',
-            left: '50%',
-            transform: 'translate(-50%, -20%)',
-          }}
-        />
-        {/* Pink/Magenta Blob */}
-        <div
-          className="absolute w-[700px] h-[700px] rounded-full opacity-20 blur-[100px] mix-blend-screen"
-          style={{
-            background: 'radial-gradient(circle, #FF006E 0%, transparent 60%)',
-            bottom: '0%',
-            left: '10%',
-          }}
-        />
-        {/* Cyan Blob */}
-        <div
-          className="absolute w-[600px] h-[600px] rounded-full opacity-20 blur-[90px] mix-blend-screen"
-          style={{
-            background: 'radial-gradient(circle, #00D4FF 0%, transparent 60%)',
-            top: '40%',
-            right: '10%',
-          }}
-        />
-      </div>
-
-      {/* Noise Texture Overlay */}
-      <div
-        className="absolute inset-0 opacity-[0.04] pointer-events-none mix-blend-overlay z-[2]"
+      {/* --- Ambient Noise Texture (Static) - Hidden on mobile for performance --- */}
+      <div 
+        className="absolute inset-0 pointer-events-none z-[50] opacity-[0.12] mix-blend-overlay hidden sm:block"
         style={{
-          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`,
+          backgroundImage: `url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.7' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)'/%3E%3C/svg%3E")`
         }}
       />
 
-      {/* BACKGROUND GRID (furthest) */}
-      <div
+      {/* --- Dynamic Cursor Spotlight - Hidden on mobile --- */}
+      <div 
+        ref={cursorLightRef}
+        className="absolute top-0 left-0 w-[600px] h-[600px] bg-[#CCFF00] rounded-full blur-[120px] opacity-10 pointer-events-none -translate-x-1/2 -translate-y-1/2 z-[1] will-change-transform hidden md:block"
+      />
+
+      {/* --- Layer 1: The Grid - Simplified on mobile --- */}
+      <div 
         ref={gridRef}
-        className="absolute inset-0 w-full h-full pointer-events-none opacity-20 z-[0]"
-        aria-hidden
-        style={{ transition: 'transform 0.02s linear' }}
+        className="absolute inset-[-10%] w-[120%] h-[120%] z-0 opacity-20 sm:opacity-30 pointer-events-none will-change-transform"
       >
-        <div
-          className="absolute inset-0"
+        <div 
+          className="w-full h-full"
           style={{
-            backgroundImage: 'linear-gradient(#333 1px, transparent 1px), linear-gradient(90deg, #333 1px, transparent 1px)',
-            backgroundSize: '80px 80px',
-            opacity: 0.3,
-          }}
-        />
-        <div
-          ref={acidMaskRef}
-          className="absolute inset-0 opacity-60 mix-blend-overlay"
-          style={{
-            backgroundImage:
-              'linear-gradient(#CCFF00 1px, transparent 1px), linear-gradient(90deg, #CCFF00 1px, transparent 1px)',
-            backgroundSize: '80px 80px',
-            maskImage: `radial-gradient(600px circle at 50% 50%, black, transparent)`,
-            WebkitMaskImage: `radial-gradient(600px circle at 50% 50%, black, transparent)`,
+            backgroundImage: `
+              linear-gradient(to right, #333 1px, transparent 1px),
+              linear-gradient(to bottom, #333 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px',
+            maskImage: 'radial-gradient(circle at center, black 30%, transparent 70%)'
           }}
         />
       </div>
 
-      {/* LOGO / BIG TEXT */}
-      <div
-        ref={logoRef}
-        className="absolute z-[2] flex items-center justify-center w-full h-full pointer-events-none select-none"
-        aria-hidden
-        // big text should be blendy & GPU accelerated; we move it with translate3d in RAF
-        style={{
-          // no CSS transition here — we rely on RAF updates
-          // keep text rendering fast
-          willChange: 'transform',
-        }}
-      >
-        <h1
-          className="text-[18vw] font-display font-bold uppercase tracking-tighter leading-none whitespace-nowrap"
-          style={{
-            background: 'linear-gradient(180deg, rgba(255,255,255,1) 0%, rgba(255,255,255,0.4) 100%)',
-            WebkitBackgroundClip: 'text',
-            WebkitTextFillColor: 'transparent',
-            backgroundClip: 'text',
-            filter: 'drop-shadow(0 0 60px rgba(204, 255, 0, 0.15))',
-            transform: 'translateZ(0)',
-            // hint to browser that transform will change frequently
-            willChange: 'transform',
-            pointerEvents: 'none',
-          }}
+      {/* --- Layer 2: Massive Typography --- */}
+      <div className="absolute inset-0 flex items-center justify-center z-2 pointer-events-none select-none overflow-hidden">
+        <h1 
+          ref={textBackRef}
+          className="font-sans font-bold text-[32vw] sm:text-[26vw] md:text-[22vw] leading-none text-[#1A1A1A] tracking-tight will-change-transform whitespace-nowrap"
         >
-          Backlog
+          BACKLOG
         </h1>
       </div>
 
-      {/* PERSON (front/mid) */}
-      <div
-        ref={personRef}
-        className="absolute bottom-0 z-[10] w-full flex justify-center items-end pointer-events-none"
-        aria-hidden
-        style={{ transition: 'transform 0.02s linear' }}
+      {/* --- Layer 4: Dust/Particles - Hidden on mobile --- */}
+      <div 
+        ref={dustRef}
+        className="absolute inset-[-20%] w-[140%] h-[140%] z-5 pointer-events-none opacity-40 will-change-transform hidden sm:block"
       >
-        <div className="relative w-[800px] max-w-full h-[85vh]">
-          {/* <div
-            className="absolute inset-0 blur-3xl opacity-30 pointer-events-none"
+        {particles.map((p, i) => (
+          <div
+            key={i}
+            className="absolute rounded-full bg-white"
             style={{
-              background: 'radial-gradient(ellipse at center bottom, #CCFF00 0%, transparent 60%)',
-              transform: 'scale(0.8) translateY(10%)',
+              width: p.width,
+              height: p.height,
+              top: p.top,
+              left: p.left,
+              opacity: p.opacity,
             }}
-          /> */}
+          />
+        ))}
+      </div>
+
+      {/* --- Layer 3: The Model (Parallax Subject) --- */}
+      <div 
+        ref={modelRef}
+        className="absolute bottom-0 z-10 h-[60vh] sm:h-[65vh] md:h-[80vh] lg:h-[85vh] w-full pointer-events-none flex items-end justify-center will-change-transform"
+      >
+        <div className="relative h-full w-[90%] sm:w-[75%] md:w-[55vh] lg:w-[70vh] max-w-[450px] md:max-w-none">
           <Image
             src="/man.png"
             alt="Model"
             fill
-            className="object-cover drop-shadow-2xl"
+            priority
+            className="object-cover object-top"
             style={{
-              maskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
-              WebkitMaskImage: 'linear-gradient(to bottom, black 50%, transparent 100%)',
-              filter: 'contrast(1.1) brightness(1.05)',
+              maskImage: 'linear-gradient(to bottom, black 75%, transparent 100%)',
+              WebkitMaskImage: 'linear-gradient(to bottom, black 75%, transparent 100%)',
+              filter: 'contrast(1.2) brightness(0.9) grayscale(100%)',
             }}
             draggable={false}
-            priority
           />
         </div>
       </div>
 
-      {/* FOREGROUND UI */}
-      <div className="relative z-[20] w-full h-full flex flex-col justify-between p-6 md:p-12 pointer-events-none">
-        <div className="flex justify-between items-start transition-all duration-700 delay-500 opacity-70 pointer-events-none">
-          <div className="flex flex-col gap-1 font-mono text-[10px] uppercase tracking-widest text-neutral-400">
-            <span className="flex items-center gap-2 text-white">
-              <Globe size={12} className="text-[#CCFF00] animate-pulse" /> Global_Server_01
-            </span>
-            <span>Est. 2024</span>
-          </div>
-          <div className="hidden md:flex items-center gap-4 pointer-events-auto">
-            <div className="flex items-center gap-2 px-3 py-1.5 border border-white/10 rounded-full bg-white/5 backdrop-blur-sm">
-              <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-              <span className="text-[10px] font-mono text-neutral-400">LIVE</span>
+
+      {/* --- Layer 5: Foreground UI (Interactive) --- */}
+      <div className="relative z-20 w-full h-full flex flex-col justify-between p-4 sm:p-6 md:p-10 lg:p-12 pointer-events-none pt-20 sm:pt-24 md:pt-28">
+        
+        {/* Header Area - Simplified on mobile */}
+        <div className="flex justify-between items-start pointer-events-auto">
+          {/* Left side info - Hidden on very small screens */}
+          <div className="hidden xs:flex flex-col gap-1 sm:gap-2 font-mono text-[10px] sm:text-xs text-neutral-500 uppercase tracking-widest">
+            <div className="flex items-center gap-2 text-white">
+              <Globe size={12} className="text-[#CCFF00] animate-pulse" /> 
+              <span className="text-[10px] sm:text-xs">Global_Server_01</span>
             </div>
-            <Maximize2 size={20} className="text-neutral-600 hover:text-white transition-colors cursor-pointer" />
+            <div className="h-px w-16 sm:w-20 bg-neutral-800" />
+            <span className="text-[9px] sm:text-xs">Est. 2024</span>
           </div>
+
+          {/* System status - Hidden on mobile */}
+          <button className="group hidden md:flex items-center gap-3 px-4 py-2 border border-white/10 bg-white/5 backdrop-blur-md rounded-full hover:bg-white/10 transition-colors">
+            <div className="w-1.5 h-1.5 rounded-full bg-green-500 animate-pulse" />
+            <span className="text-[10px] font-mono text-neutral-300">SYSTEM_ONLINE</span>
+            <Maximize2 size={14} className="text-neutral-500 group-hover:text-white transition-colors" />
+          </button>
         </div>
 
-     
-
-        <div className="flex justify-between items-end pointer-events-auto">
-          <div className="hidden md:block max-w-xs">
-            <p className="font-mono text-[10px] text-neutral-400 leading-relaxed uppercase">
-              Reimagining the silhouette of the modern underground. <br />
+        {/* Footer / CTA Area */}
+        <div className="flex flex-col gap-4 sm:gap-5 md:flex-row md:justify-between md:items-end pointer-events-auto">
+          
+          {/* Description - Simplified on mobile */}
+          <div className="max-w-[280px] sm:max-w-sm md:max-w-md space-y-2 sm:space-y-3">
+            <div className="flex items-center gap-2">
+                <div className="w-5 sm:w-8 h-px bg-[#CCFF00]" />
+                <span className="font-mono text-[#CCFF00] text-[10px] sm:text-xs">COLLECTION_004</span>
+            </div>
+            <p className="font-sans text-neutral-400 text-[11px] sm:text-sm md:text-base leading-relaxed uppercase tracking-wide">
+              <span className="hidden sm:inline">Reimagining the silhouette of the modern underground. </span>
               Raw textures. Heavy weights. No compromise.
             </p>
           </div>
 
-          <button className="group relative bg-white text-black h-16 px-10 font-display font-bold uppercase text-lg tracking-widest overflow-hidden hover:scale-105 active:scale-95 transition-all duration-300 skew-x-[-10deg] shadow-[0_0_40px_rgba(204,255,0,0.3)] hover:shadow-[0_0_60px_rgba(204,255,0,0.5)] pointer-events-auto">
-            <div className="skew-x-[10deg] flex items-center gap-3">
-              Shop Now <ArrowRight size={20} className="group-hover:translate-x-1 transition-transform" />
+          {/* CTA Button */}
+          <button className="relative group bg-white text-black h-11 sm:h-14 md:h-16 px-5 sm:px-8 md:px-12 overflow-hidden transform -skew-x-12 hover:-skew-x-6 transition-all duration-300 shadow-[0_0_20px_rgba(204,255,0,0.1)] hover:shadow-[0_0_50px_rgba(204,255,0,0.6)] w-fit">
+            <div className="skew-x-12 group-hover:skew-x-6 transition-all duration-300 flex items-center gap-2 sm:gap-4 font-sans font-bold text-sm sm:text-lg md:text-xl uppercase tracking-wider">
+              <span>Enter Store</span>
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform sm:w-5 sm:h-5 md:w-6 md:h-6" />
             </div>
-            <div className="absolute top-0 -left-full w-[200%] h-full bg-[#CCFF00] transform -translate-x-full group-hover:translate-x-0 transition-transform duration-500 ease-out -z-10" />
+            
+            {/* Hover Fill Effect */}
+            <div className="absolute inset-0 bg-[#CCFF00] translate-y-full group-hover:translate-y-0 transition-transform duration-300 ease-out -z-10" />
           </button>
         </div>
       </div>
 
-      {/* Scroll Indicator */}
-     
+      {/* --- HUD/Deco Elements - Hidden on mobile --- */}
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 flex-col items-center gap-2 pointer-events-none opacity-50 hidden sm:flex">
+        <div className="w-px h-12 bg-linear-to-b from-transparent via-white/50 to-transparent" />
+      </div>
 
-      {/* Corner accents */}
-      <div className="absolute top-6 left-6 w-16 h-16 border-l-2 border-t-2 border-white/10 pointer-events-none" />
-      <div className="absolute top-6 right-6 w-16 h-16 border-r-2 border-t-2 border-white/10 pointer-events-none" />
-      <div className="absolute bottom-6 left-6 w-16 h-16 border-l-2 border-b-2 border-white/10 pointer-events-none" />
-      <div className="absolute bottom-6 right-6 w-16 h-16 border-r-2 border-b-2 border-white/10 pointer-events-none" />
+      {/* Corner Brackets - Hidden on very small screens */}
+      <div className="absolute top-20 sm:top-24 md:top-28 left-4 md:left-8 w-3 h-3 sm:w-4 sm:h-4 border-t border-l border-white/30 hidden sm:block" />
+      <div className="absolute top-20 sm:top-24 md:top-28 right-4 md:right-8 w-3 h-3 sm:w-4 sm:h-4 border-t border-r border-white/30 hidden sm:block" />
+      <div className="absolute bottom-4 md:bottom-8 left-4 md:left-8 w-3 h-3 sm:w-4 sm:h-4 border-b border-l border-white/30 hidden sm:block" />
+      <div className="absolute bottom-4 md:bottom-8 right-4 md:right-8 w-3 h-3 sm:w-4 sm:h-4 border-b border-r border-white/30 hidden sm:block" />
+
     </section>
   );
 };
