@@ -3,13 +3,9 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/use-auth';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Lock, Mail, User as UserIcon, AlertCircle, ArrowLeft } from 'lucide-react';
+import { AlertCircle } from 'lucide-react';
 import Link from 'next/link';
-import { Header } from '@/components/header';
-import { Footer } from '@/components/footer';
+import Image from 'next/image';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -32,13 +28,11 @@ export default function SignupPage() {
     e.preventDefault();
     setError('');
 
-    // Validate password match
     if (password !== confirmPassword) {
       setError('Passwords do not match');
       return;
     }
 
-    // Validate password length
     if (password.length < 8) {
       setError('Password must be at least 8 characters long');
       return;
@@ -51,7 +45,7 @@ export default function SignupPage() {
       if (result.success) {
         router.push('/account');
       } else {
-        setError(result.message || 'Signup failed');
+        setError(result.message || 'Registration failed');
       }
     } catch (err) {
       setError('An error occurred. Please try again.');
@@ -61,161 +55,165 @@ export default function SignupPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-black">
-      <Header />
+    <div className="flex min-h-screen bg-white">
+      {/* Left Side - Form */}
+      <div className="w-full lg:w-1/2 flex flex-col justify-center px-8 md:px-16 lg:px-24 py-12 overflow-y-auto">
+        {/* Logo */}
+        <Link href="/" className="mb-8">
+          <h1 style={{
+            color: 'black'
+          }} className="text-4xl md:text-5xl font-black tracking-tighter uppercase">
+            BACKLOG
+          </h1>
+        </Link>
 
-      <main className="flex-1 flex items-center justify-center p-4 py-16">
-        <div className="w-full max-w-lg">
-          {/* Back Link */}
-          <Link
-            href="/"
-            className="inline-flex items-center text-sm text-zinc-500 hover:text-white transition-colors mb-8 font-medium uppercase tracking-wider"
-          >
-            <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Home
-          </Link>
+        {/* Form */}
+        <div className="max-w-md">
+          <h2 className="text-sm font-medium uppercase tracking-widest mb-6">
+            Create Account
+          </h2>
 
-          {/* Signup Form Card */}
-          <div className="border-2 border-white/10 bg-zinc-950 p-8">
-            <div className="space-y-2 mb-8">
-              <h1 className="text-4xl font-black uppercase tracking-tighter text-white">
-                Join the Culture
-              </h1>
-              <p className="text-zinc-500 font-medium text-sm uppercase tracking-wider">
-                Create your account
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {error && (
+              <div className="flex items-center gap-2 text-red-600 text-xs uppercase tracking-wider">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase tracking-widest text-black/50">
+                  First Name
+                </label>
+                <input
+                  type="text"
+                  value={firstName}
+                  onChange={(e) => setFirstName(e.target.value)}
+                  required
+                  className="w-full border-b border-black/20 py-2 text-sm focus:border-black focus:outline-none transition-colors bg-transparent"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] uppercase tracking-widest text-black/50">
+                  Last Name
+                </label>
+                <input
+                  type="text"
+                  value={lastName}
+                  onChange={(e) => setLastName(e.target.value)}
+                  required
+                  className="w-full border-b border-black/20 py-2 text-sm focus:border-black focus:outline-none transition-colors bg-transparent"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-black/50">
+                Email
+              </label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                className="w-full border-b border-black/20 py-2 text-sm focus:border-black focus:outline-none transition-colors bg-transparent"
+              />
+            </div>
+
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-black/50">
+                Password
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+                className="w-full border-b border-black/20 py-2 text-sm focus:border-black focus:outline-none transition-colors bg-transparent"
+              />
+              <p className="text-[10px] text-black/40 mt-1">
+                Minimum 8 characters
               </p>
             </div>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {error && (
-                <div className="bg-red-500/10 border-2 border-red-500/20 text-red-500 px-4 py-3 flex items-center gap-3">
-                  <AlertCircle className="h-5 w-5 flex-shrink-0" />
-                  <span className="text-sm font-medium">{error}</span>
-                </div>
-              )}
+            <div className="space-y-1">
+              <label className="text-[10px] uppercase tracking-widest text-black/50">
+                Confirm Password
+              </label>
+              <input
+                type="password"
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
+                className="w-full border-b border-black/20 py-2 text-sm focus:border-black focus:outline-none transition-colors bg-transparent"
+              />
+            </div>
 
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label htmlFor="firstName" className="text-white font-bold uppercase text-xs tracking-wider">
-                    First Name
-                  </Label>
-                  <div className="relative">
-                    <UserIcon className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600" />
-                    <Input
-                      id="firstName"
-                      type="text"
-                      placeholder="John"
-                      value={firstName}
-                      onChange={(e) => setFirstName(e.target.value)}
-                      className="h-12 pl-12 bg-black border-2 border-white/20 text-white placeholder:text-zinc-600 focus:border-white font-medium"
-                    />
-                  </div>
-                </div>
+            <div className="pt-2">
+              <label className="flex items-start gap-3 cursor-pointer">
+                <input
+                  type="checkbox"
+                  required
+                  className="mt-1 h-4 w-4 border border-black/30 rounded-none accent-black"
+                />
+                <span className="text-[10px] text-black/60 leading-relaxed">
+                  I have read and accept the{' '}
+                  <Link href="/terms" className="underline">
+                    Terms and Conditions
+                  </Link>{' '}
+                  and{' '}
+                  <Link href="/privacy" className="underline">
+                    Privacy Policy
+                  </Link>
+                </span>
+              </label>
+            </div>
 
-                <div className="space-y-2">
-                  <Label htmlFor="lastName" className="text-white font-bold uppercase text-xs tracking-wider">
-                    Last Name
-                  </Label>
-                  <Input
-                    id="lastName"
-                    type="text"
-                    placeholder="Doe"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="h-12 bg-black border-2 border-white/20 text-white placeholder:text-zinc-600 focus:border-white font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="email" className="text-white font-bold uppercase text-xs tracking-wider">
-                  Email Address
-                </Label>
-                <div className="relative">
-                  <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600" />
-                  <Input
-                    id="email"
-                    type="email"
-                    placeholder="you@example.com"
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    required
-                    className="h-12 pl-12 bg-black border-2 border-white/20 text-white placeholder:text-zinc-600 focus:border-white font-medium"
-                  />
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="password" className="text-white font-bold uppercase text-xs tracking-wider">
-                  Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600" />
-                  <Input
-                    id="password"
-                    type="password"
-                    placeholder="••••••••"
-                    value={password}
-                    onChange={(e) => setPassword(e.target.value)}
-                    required
-                    className="h-12 pl-12 bg-black border-2 border-white/20 text-white placeholder:text-zinc-600 focus:border-white font-medium"
-                  />
-                </div>
-                <p className="text-xs text-zinc-600 font-medium">
-                  Must be at least 8 characters
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="confirmPassword" className="text-white font-bold uppercase text-xs tracking-wider">
-                  Confirm Password
-                </Label>
-                <div className="relative">
-                  <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-zinc-600" />
-                  <Input
-                    id="confirmPassword"
-                    type="password"
-                    placeholder="••••••••"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    required
-                    className="h-12 pl-12 bg-black border-2 border-white/20 text-white placeholder:text-zinc-600 focus:border-white font-medium"
-                  />
-                </div>
-              </div>
-
-              <Button
+            <div className="pt-4 space-y-3">
+              <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-white text-black hover:bg-zinc-200 font-black uppercase tracking-wider text-sm mt-6"
+                className="w-full h-12 bg-black text-white text-xs uppercase tracking-widest font-medium hover:bg-black/80 transition-colors disabled:opacity-50"
               >
-                {isLoading ? (
-                  <span className="flex items-center gap-2">
-                    <div className="h-4 w-4 border-2 border-black/30 border-t-black rounded-full animate-spin"></div>
-                    Creating Account...
-                  </span>
-                ) : (
-                  'Create Account'
-                )}
-              </Button>
-            </form>
+                {isLoading ? 'Creating account...' : 'Create Account'}
+              </button>
 
-            <div className="mt-8 pt-8 border-t-2 border-white/10 text-center">
-              <p className="text-zinc-500 text-sm font-medium">
-                Already have an account?{' '}
-                <Link
-                  href="/auth/login"
-                  className="text-white hover:text-zinc-300 transition-colors font-bold uppercase tracking-wider"
-                >
-                  Sign In
-                </Link>
-              </p>
+              <Link
+                href="/auth/login"
+                className="block w-full h-12 border border-black text-black text-xs uppercase tracking-widest font-medium hover:bg-black hover:text-white transition-colors text-center leading-12"
+              >
+                Already have an account? Log In
+              </Link>
             </div>
+          </form>
+
+         
+
+          {/* Help Link */}
+          <div className="mt-10 pb-8">
+            <Link
+              href="/help"
+              className="text-xs uppercase tracking-widest font-medium hover:underline"
+            >
+              Help
+            </Link>
           </div>
         </div>
-      </main>
+      </div>
 
-      <Footer />
+      {/* Right Side - Image */}
+      <div className="hidden lg:block lg:w-1/2 relative">
+        <Image
+          src="https://images.unsplash.com/photo-1509631179647-0177331693ae?q=80&w=1200&auto=format&fit=crop"
+          alt="Fashion editorial"
+          fill
+          className="object-cover grayscale"
+          priority
+          unoptimized
+        />
+      </div>
     </div>
   );
 }

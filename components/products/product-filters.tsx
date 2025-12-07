@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
-import { X, SlidersHorizontal } from 'lucide-react';
+import { SlidersHorizontal } from 'lucide-react';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 
 interface ProductFiltersProps {
@@ -27,11 +27,11 @@ export function ProductFilters({
 
   const hasActiveFilters = selectedCategory || selectedSize;
 
-  const FilterContent = () => (
-    <div className="space-y-6">
+  const filterContent = (
+    <div className="space-y-8">
       {/* Category Filter */}
       <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider mb-3 text-white">
+        <h3 className="text-xs font-medium uppercase tracking-widest mb-4 text-black/50">
           Category
         </h3>
         <div className="space-y-2">
@@ -41,10 +41,10 @@ export function ProductFilters({
               onClick={() =>
                 onCategoryChange(selectedCategory === category ? null : category)
               }
-              className={`w-full text-left px-4 py-2 border-2 transition-colors uppercase text-sm font-bold ${
+              className={`w-full text-left px-4 py-2 border transition-colors uppercase text-xs tracking-wider ${
                 selectedCategory === category
-                  ? 'border-white bg-white text-black'
-                  : 'border-white/20 text-white hover:border-white/50'
+                  ? 'border-black bg-black text-white'
+                  : 'border-black/20 text-black hover:border-black'
               }`}
             >
               {category}
@@ -55,7 +55,7 @@ export function ProductFilters({
 
       {/* Size Filter */}
       <div>
-        <h3 className="text-sm font-bold uppercase tracking-wider mb-3 text-white">
+        <h3 className="text-xs font-medium uppercase tracking-widest mb-4 text-black/50">
           Size
         </h3>
         <div className="grid grid-cols-3 gap-2">
@@ -63,10 +63,10 @@ export function ProductFilters({
             <button
               key={size}
               onClick={() => onSizeChange(selectedSize === size ? null : size)}
-              className={`px-4 py-2 border-2 transition-colors uppercase text-sm font-bold ${
+              className={`px-4 py-2 border transition-colors uppercase text-xs tracking-wider ${
                 selectedSize === size
-                  ? 'border-white bg-white text-black'
-                  : 'border-white/20 text-white hover:border-white/50'
+                  ? 'border-black bg-black text-white'
+                  : 'border-black/20 text-black hover:border-black'
               }`}
             >
               {size}
@@ -77,14 +77,12 @@ export function ProductFilters({
 
       {/* Clear Filters */}
       {hasActiveFilters && (
-        <Button
+        <button
           onClick={onClearFilters}
-          variant="outline"
-          className="w-full border-2 border-red-500 text-red-500 hover:bg-red-500 hover:text-white uppercase font-bold"
+          className="w-full text-xs uppercase tracking-widest text-black/50 hover:text-black transition-colors underline underline-offset-4"
         >
-          <X className="h-4 w-4 mr-2" />
-          Clear Filters
-        </Button>
+          Clear All Filters
+        </button>
       )}
     </div>
   );
@@ -92,12 +90,12 @@ export function ProductFilters({
   return (
     <>
       {/* Desktop Sidebar */}
-      <div className="hidden lg:block w-64 sticky top-24 h-fit">
-        <div className="border-2 border-white/10 p-6 bg-zinc-950">
-          <h2 className="text-xl font-bold uppercase tracking-wider mb-6 text-white">
+      <div className="hidden lg:block w-56 shrink-0">
+        <div className="sticky top-24">
+          <h2 className="text-xs font-medium uppercase tracking-widest mb-6 text-black/50">
             Filters
           </h2>
-          <FilterContent />
+          {filterContent}
         </div>
       </div>
 
@@ -107,22 +105,22 @@ export function ProductFilters({
           <SheetTrigger asChild>
             <Button
               size="lg"
-              className="h-14 w-14 rounded-full bg-white text-black hover:bg-zinc-200 shadow-lg border-2 border-black relative"
+              className="h-12 w-12 rounded-none bg-black text-white hover:bg-black/80 shadow-lg relative"
             >
-              <SlidersHorizontal className="h-6 w-6" />
+              <SlidersHorizontal className="h-5 w-5" />
               {hasActiveFilters && (
-                <span className="absolute -top-1 -right-1 h-4 w-4 bg-red-500 rounded-full border-2 border-black" />
+                <span className="absolute -top-1 -right-1 h-3 w-3 bg-white border border-black" />
               )}
             </Button>
           </SheetTrigger>
-          <SheetContent side="left" className="bg-black border-white/20">
+          <SheetContent side="left" className="bg-white border-r border-black/10">
             <SheetHeader>
-              <SheetTitle className="text-xl font-bold uppercase tracking-wider text-white">
+              <SheetTitle className="text-xs font-medium uppercase tracking-widest text-black/50">
                 Filters
               </SheetTitle>
             </SheetHeader>
-            <div className="mt-6">
-              <FilterContent />
+            <div className="mt-8">
+              {filterContent}
             </div>
           </SheetContent>
         </Sheet>

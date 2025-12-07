@@ -1,5 +1,62 @@
 @import "tailwindcss";
 
+/* Neue Haas Grotesk Display - The original Helvetica */
+@font-face {
+  font-family: 'Neue Haas Grotesk Display';
+  src: url('/helvetica-similar-fonts/neue haas grotesk/Neue Haas Grotesk Display Family/NeueHaasGrotDisp-35Thin-Trial.otf') format('opentype');
+  font-weight: 100;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Haas Grotesk Display';
+  src: url('/helvetica-similar-fonts/neue haas grotesk/Neue Haas Grotesk Display Family/NeueHaasGrotDisp-45Light-Trial.otf') format('opentype');
+  font-weight: 300;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Haas Grotesk Display';
+  src: url('/helvetica-similar-fonts/neue haas grotesk/Neue Haas Grotesk Display Family/NeueHaasGrotDisp-55Roman-Trial.otf') format('opentype');
+  font-weight: 400;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Haas Grotesk Display';
+  src: url('/helvetica-similar-fonts/neue haas grotesk/Neue Haas Grotesk Display Family/NeueHaasGrotDisp-56Italic-Trial.otf') format('opentype');
+  font-weight: 400;
+  font-style: italic;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Haas Grotesk Display';
+  src: url('/helvetica-similar-fonts/neue haas grotesk/Neue Haas Grotesk Display Family/NeueHaasGrotDisp-65Medium-Trial.otf') format('opentype');
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Haas Grotesk Display';
+  src: url('/helvetica-similar-fonts/neue haas grotesk/Neue Haas Grotesk Display Family/NeueHaasGrotDisp-75Bold-Trial.otf') format('opentype');
+  font-weight: 700;
+  font-style: normal;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'Neue Haas Grotesk Display';
+  src: url('/helvetica-similar-fonts/neue haas grotesk/Neue Haas Grotesk Display Family/NeueHaasGrotDisp-95Black-Trial.otf') format('opentype');
+  font-weight: 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 @theme {
   --background: hsl(0 0% 100%);
   --foreground: hsl(222.2 84% 4.9%);
@@ -46,4 +103,34 @@
     --input: hsl(217.2 32.6% 17.5%);
     --ring: hsl(212.7 26.8% 83.9%);
   }
+}
+
+/* Base styles */
+html {
+  font-family: 'Neue Haas Grotesk Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: 'Neue Haas Grotesk Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  letter-spacing: 0.01em;
+}
+
+/* Typography refinements for Zara-style aesthetic */
+h1, h2, h3, h4, h5, h6 {
+  font-family: 'Neue Haas Grotesk Display', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  font-weight: 500;
+  letter-spacing: 0.02em;
+}
+
+/* Smooth transitions for all interactive elements */
+a, button {
+  transition: all 0.3s ease;
+}
+
+/* Custom selection color */
+::selection {
+  background-color: black;
+  color: white;
 }

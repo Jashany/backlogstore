@@ -5,7 +5,6 @@ import { formatPrice } from '@/lib/utils/format-price';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ShoppingCart } from 'lucide-react';
-import { Button } from '@/components/ui/button';
 
 interface ProductCardProps {
   product: ProductListItem;
@@ -16,52 +15,46 @@ export function ProductCard({ product, onQuickAdd }: ProductCardProps) {
   return (
     <div className="group relative">
       <Link href={`/shop/${product.id}`}>
-        <div className="relative aspect-square overflow-hidden bg-zinc-900 border-2 border-white/10 hover:border-white transition-colors">
+        <div className="relative aspect-3/4 overflow-hidden bg-neutral-100">
           {product.mainImageUrl ? (
             <Image
               src={product.mainImageUrl}
               alt={product.name}
               fill
-              className="object-cover group-hover:scale-105 transition-transform duration-300"
-              sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+              className="object-cover group-hover:scale-105 transition-transform duration-500"
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
             />
           ) : (
-            <div className="w-full h-full flex items-center justify-center text-zinc-600">
-              <ShoppingCart className="h-12 w-12" />
+            <div className="w-full h-full flex items-center justify-center text-black/20">
+              <ShoppingCart className="h-8 w-8" />
             </div>
           )}
 
-          {/* Hover overlay */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
-        </div>
-      </Link>
-
-      <div className="mt-3 space-y-2">
-        <Link href={`/shop/${product.id}`}>
-          <h3 className="font-bold text-sm uppercase tracking-wider text-white group-hover:text-zinc-300 transition-colors line-clamp-1">
-            {product.name}
-          </h3>
-        </Link>
-
-        <div className="flex items-center justify-between">
-          <p className="text-lg font-bold text-white">
-            {formatPrice(product.basePrice)}
-          </p>
-
+          {/* Quick add button on hover */}
           {onQuickAdd && (
-            <Button
-              size="sm"
-              variant="outline"
+            <button
               onClick={(e) => {
                 e.preventDefault();
                 onQuickAdd(product.id);
               }}
-              className="border-2 border-white text-white hover:bg-white hover:text-black transition-colors uppercase text-xs font-bold"
+              className="absolute bottom-0 left-0 right-0 bg-white/90 backdrop-blur-sm text-black py-3 text-xs uppercase tracking-widest font-medium opacity-0 group-hover:opacity-100 transition-opacity duration-300 hover:bg-black hover:text-white"
             >
-              Add
-            </Button>
+              Quick Add
+            </button>
           )}
         </div>
+      </Link>
+
+      <div className="mt-3 space-y-1">
+        <Link href={`/shop/${product.id}`}>
+          <h3 className="text-xs uppercase tracking-wider text-black group-hover:underline transition-colors line-clamp-1">
+            {product.name}
+          </h3>
+        </Link>
+
+        <p className="text-xs text-black/70">
+          {formatPrice(product.basePrice)}
+        </p>
       </div>
     </div>
   );
